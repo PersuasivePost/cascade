@@ -32,7 +32,7 @@ def _template_summary(service_name: str, affected: list[dict], longest_chain: di
     if longest_chain and longest_chain.get("chainLength", 0) > 0:
         parts.append("Longest chain: " + " → ".join(longest_chain["chain"]) + ".")
     return " ".join(parts)
-
+    
 
 def generate_incident_summary(
     service_name: str,

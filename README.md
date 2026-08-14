@@ -190,10 +190,15 @@ screen or infinite spinner.
 
 ## Screenshots
 
-_Add screenshots here after running the app against your live CognoDB instance:
-the service dashboard, a simulated outage's blast-radius graph, and the workflow
-explorer._
+### Service dashboard — pick any service to simulate an outage
+![Service dashboard](docs/screenshot-dashboard.png)
+
+### Blast-radius simulation — Stripe outage (8 workflows, 4 teams, 3-hop cascade)
+![Blast-radius simulation](docs/screenshot-blast-radius.png)
+
+### Workflow explorer — browse and search every automation
+![Workflow explorer](docs/screenshot-workflows.png)
 
 ## Demo
 
-_Hosted demo link + short screen recording go here before submission._
+_Hosted demo link and screen recording will be added here before final submission._
