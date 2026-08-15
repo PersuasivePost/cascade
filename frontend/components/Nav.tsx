@@ -12,6 +12,9 @@ export default function Nav() {
           <Link href="/" className="text-muted hover:text-ink transition-colors">
             services
           </Link>
+          <Link href="/dependencies" className="text-muted hover:text-ink transition-colors">
+            critical dependencies
+          </Link>
           <Link href="/workflows" className="text-muted hover:text-ink transition-colors">
             workflows
           </Link>

@@ -17,9 +17,9 @@ const config: Config = {
         signal: "#5EA8FF",
       },
       fontFamily: {
-        display: ["var(--font-display)", "sans-serif"],
-        body: ["var(--font-body)", "sans-serif"],
-        mono: ["var(--font-mono)", "monospace"],
+        display: ["var(--font-display)", "Space Grotesk", "system-ui", "sans-serif"],
+        body: ["var(--font-body)", "Inter", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "JetBrains Mono", "Consolas", "monospace"],
       },
       boxShadow: {
         ring: "0 0 0 1px #232D39",

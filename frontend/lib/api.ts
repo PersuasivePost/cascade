@@ -63,6 +63,7 @@ export type AffectedWorkflow = {
   workflow_name: string;
   criticality: string;
   hops_from_failure: number;
+  parent_id?: string;
   teams: string[];
 };
 
@@ -77,9 +78,24 @@ export type BlastRadius = {
 
 export type HealthStatus = { database_connected: boolean; error: string | null };
 
+export type CriticalDependency = {
+  id: string;
+  name: string;
+  category: string;
+  vendor: string;
+  status: string;
+  directWorkflows: number;
+  totalImpactedWorkflows: number;
+  impactedTeamCount: number;
+  hasCriticalWorkflows: boolean;
+  sampleWorkflows: string[];
+  riskLevel: "HIGH" | "MEDIUM" | "LOW";
+};
+
 export const api = {
   health: () => request<HealthStatus>("/health"),
   services: () => request<Service[]>("/services"),
+  spof: () => request<CriticalDependency[]>("/services/spof"),
   workflows: () => request<WorkflowSummary[]>("/workflows"),
   workflow: (id: string) => request<WorkflowDetail>(`/workflows/${id}`),
   search: (q: string) => request<{ id: string; name: string; criticality: string; owningTeam: string | null }[]>(
@@ -87,3 +103,4 @@ export const api = {
   ),
   blastRadius: (serviceId: string) => request<BlastRadius>(`/blast-radius/${serviceId}`),
 };
+

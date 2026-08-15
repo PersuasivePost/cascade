@@ -9,6 +9,20 @@ class Service(BaseModel):
     status: str
 
 
+class CriticalDependency(BaseModel):
+    id: str
+    name: str
+    category: str
+    vendor: str
+    status: str
+    directWorkflows: int
+    totalImpactedWorkflows: int
+    impactedTeamCount: int
+    hasCriticalWorkflows: bool
+    sampleWorkflows: list[str] = []
+    riskLevel: str = "LOW"
+
+
 class Team(BaseModel):
     id: str
     name: str
@@ -37,6 +51,7 @@ class AffectedWorkflow(BaseModel):
     workflow_name: str
     criticality: str
     hops_from_failure: int
+    parent_id: str = "epicenter"
     teams: list[str]
 
 

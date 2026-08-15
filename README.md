@@ -70,9 +70,31 @@ confirmation email → CSAT survey, a 4-hop chain spanning 3 teams).
 
 ---
 
-## The two queries this app is built around
+## The key graph queries this app is built around
 
-**1. Multi-hop blast radius** (`app/queries.py::blast_radius`) — every workflow
+**1. Single Point of Failure (SPOF) Analysis** (`app/queries.py::get_critical_dependencies`) — calculates total transitive downstream impact for every external service to identify systemic risk:
+
+```cypher
+MATCH (s:Service)
+OPTIONAL MATCH (origin:Workflow)-[:DEPENDS_ON]->(s)
+OPTIONAL MATCH path = (origin)-[:TRIGGERS*0..6]->(downstream:Workflow)
+WITH s,
+     count(DISTINCT origin) AS directWorkflows,
+     count(DISTINCT downstream) AS totalImpactedWorkflows,
+     collect(DISTINCT downstream.criticality) AS criticalities,
+     collect(DISTINCT downstream.name)[..5] AS sampleWorkflows
+OPTIONAL MATCH (origin:Workflow)-[:DEPENDS_ON]->(s)
+OPTIONAL MATCH p = (origin)-[:TRIGGERS*0..6]->(downstream:Workflow)
+OPTIONAL MATCH (t:Team)-[:OWNS]->(downstream)
+RETURN s.id, s.name, s.category, s.vendor,
+       directWorkflows, totalImpactedWorkflows,
+       count(DISTINCT t) AS impactedTeamCount,
+       ("critical" IN criticalities) AS hasCriticalWorkflows,
+       sampleWorkflows
+ORDER BY totalImpactedWorkflows DESC, directWorkflows DESC
+```
+
+**2. Multi-hop blast radius** (`app/queries.py::blast_radius`) — every workflow
 transitively affected by an outage, tagged with hop-distance and owning teams:
 
 ```cypher
@@ -81,12 +103,16 @@ MATCH (origin:Workflow)-[:DEPENDS_ON]->(s)
 MATCH path = (origin)-[:TRIGGERS*0..6]->(downstream:Workflow)
 WITH s, downstream, min(length(path)) AS hopsFromFailure
 MATCH (team:Team)-[:OWNS]->(downstream)
-RETURN downstream.id, downstream.name, downstream.criticality,
-       hopsFromFailure, collect(DISTINCT team.name) AS teams
+RETURN s.name AS serviceName,
+       downstream.id AS workflowId,
+       downstream.name AS workflowName,
+       downstream.criticality AS criticality,
+       hopsFromFailure,
+       collect(DISTINCT team.name) AS teams
 ORDER BY hopsFromFailure ASC
 ```
 
-**2. Longest cascade chain** (`app/queries.py::longest_cascade_chain`) — the relational-unfriendly
+**3. Longest cascade chain** (`app/queries.py::longest_cascade_chain`) — the relational-unfriendly
 one: the single longest unbroken sequence of triggered workflows set off by an outage.
 
 ```cypher
@@ -99,10 +125,10 @@ ORDER BY chainLength DESC LIMIT 1
 RETURN [n IN nodes(path) | n.name] AS chain, chainLength
 ```
 
-Both are called with parameters via the official Neo4j driver — no string-concatenated
+All queries are called with parameters via the official Neo4j driver — no string-concatenated
 Cypher anywhere in the app (`backend/app/db.py::run_query`).
 
-An optional AI layer (`backend/app/ai_summary.py`) turns query #1's output into a
+An optional AI layer (`backend/app/ai_summary.py`) turns query #2's output into a
 2–3 sentence plain-English incident summary via the Anthropic API, with a
 template-based fallback so the core product works with zero AI dependency.
 
@@ -116,16 +142,17 @@ cascade/
 │   ├── app/
 │   │   ├── config.py        env-var settings (never hardcoded secrets)
 │   │   ├── db.py             driver singleton, connection-error handling
-│   │   ├── queries.py        every Cypher statement, parameterised
+│   │   ├── queries.py        Cypher queries (SPOF, Blast Radius, Longest Chain)
 │   │   ├── ai_summary.py     LLM incident summary + safe fallback
-│   │   ├── schemas.py        response models
-│   │   ├── routers/          graph.py, health.py
+│   │   ├── schemas.py        response models (Service, CriticalDependency, BlastRadius)
+│   │   ├── routers/          graph.py (service, SPOF, workflow endpoints), health.py
 │   │   └── main.py           FastAPI app, CORS
 │   ├── seed/seed_data.py     loads the demo dataset
 │   └── .env.example
 └── frontend/                 Next.js 14 (App Router) + TypeScript + Tailwind
     ├── app/
-    │   ├── page.tsx                     service inventory dashboard
+    │   ├── page.tsx                     service dashboard + SPOF highlight widget
+    │   ├── dependencies/page.tsx        SPOF ranking & critical dependency report
     │   ├── workflows/page.tsx           browse/search all workflows
     │   └── blast-radius/[serviceId]/    outage simulation + graph + AI summary
     ├── components/
@@ -190,8 +217,11 @@ screen or infinite spinner.
 
 ## Screenshots
 
-### Service dashboard — pick any service to simulate an outage
+### Service dashboard with SPOF highlight widget — pick any service to simulate an outage
 ![Service dashboard](docs/screenshot-dashboard.png)
+
+### Single Point of Failure (SPOF) Analysis & Ranking — critical dependency report
+![SPOF analysis](docs/screenshot-dependencies.png)
 
 ### Blast-radius simulation — Stripe outage (8 workflows, 4 teams, 3-hop cascade)
 ![Blast-radius simulation](docs/screenshot-blast-radius.png)
@@ -202,3 +232,4 @@ screen or infinite spinner.
 ## Demo
 
 _Hosted demo link and screen recording will be added here before final submission._
+

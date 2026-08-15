@@ -20,6 +20,39 @@ def get_services():
     return _wrap(queries.list_services)
 
 
+@router.get("/spof")
+@router.get("/services/spof")
+def get_spof():
+    data = _wrap(queries.get_critical_dependencies)
+    results = []
+    for row in data:
+        total = row.get("totalImpactedWorkflows", 0)
+        has_crit = row.get("hasCriticalWorkflows", False)
+        
+        # Calculate risk score
+        if total >= 6 or (has_crit and total >= 4):
+            risk = "HIGH"
+        elif total >= 3:
+            risk = "MEDIUM"
+        else:
+            risk = "LOW"
+            
+        results.append({
+            "id": row["id"],
+            "name": row["name"],
+            "category": row["category"],
+            "vendor": row["vendor"],
+            "status": row["status"],
+            "directWorkflows": row["directWorkflows"],
+            "totalImpactedWorkflows": total,
+            "impactedTeamCount": row.get("impactedTeamCount", 0),
+            "hasCriticalWorkflows": has_crit,
+            "sampleWorkflows": [w for w in row.get("sampleWorkflows", []) if w],
+            "riskLevel": risk,
+        })
+    return results
+
+
 @router.get("/workflows")
 def get_workflows():
     return _wrap(queries.list_workflows)
@@ -49,7 +82,7 @@ def get_blast_radius(service_id: str):
 
     affected = _wrap(queries.blast_radius, service_id)
     longest_chain = _wrap(queries.longest_cascade_chain, service_id)
-    team_count = len({t for row in affected for t in row["teams"]})
+    team_count = len({t for row in affected for t in row.get("teams", []) if t})
 
     summary = generate_incident_summary(service["name"], affected, longest_chain)
 
@@ -62,7 +95,8 @@ def get_blast_radius(service_id: str):
                 "workflow_name": row["workflowName"],
                 "criticality": row["criticality"],
                 "hops_from_failure": row["hopsFromFailure"],
-                "teams": row["teams"],
+                "parent_id": row.get("parentId", "epicenter"),
+                "teams": [t for t in row.get("teams", []) if t],
             }
             for row in affected
         ],
