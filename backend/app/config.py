@@ -7,9 +7,10 @@ Required for the app to talk to the database:
     NEO4J_USER      cognodb
     NEO4J_PASSWORD  the one-time password shown when you created the instance
 
-Optional, enables the AI incident-summary feature. If absent, the app falls
-back to a template-based summary so the core product still works without it:
-    ANTHROPIC_API_KEY
+    Optional, enables the AI incident-summary feature. If absent, the app falls
+    back to a template-based summary so the core product still works without
+    it. Set `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) to enable Gemini-based
+    summaries.
 """
 from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -22,9 +23,14 @@ class Settings(BaseSettings):
     neo4j_user: str = "cognodb"
     neo4j_password: str = ""
 
-    anthropic_api_key: str | None = None
+    gemini_api_key: str | None = None
+    google_api_key: str | None = None
 
     cors_origins: str = "http://localhost:3000"
+
+    @property
+    def effective_gemini_api_key(self) -> str | None:
+        return self.gemini_api_key or self.google_api_key
 
     @property
     def is_configured(self) -> bool:

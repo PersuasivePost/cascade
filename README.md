@@ -129,7 +129,7 @@ All queries are called with parameters via the official Neo4j driver — no stri
 Cypher anywhere in the app (`backend/app/db.py::run_query`).
 
 An optional AI layer (`backend/app/ai_summary.py`) turns query #2's output into a
-2–3 sentence plain-English incident summary via the Anthropic API, with a
+2–3 sentence plain-English incident summary via the Gemini API, with a
 template-based fallback so the core product works with zero AI dependency.
 
 ---
@@ -192,7 +192,7 @@ npm run dev
 Visit `http://localhost:3000`.
 
 ### Optional: AI incident summaries
-Set `ANTHROPIC_API_KEY` in `backend/.env`. Without it, summaries fall back to a
+Set `GEMINI_API_KEY` in `backend/.env`. Without it, summaries fall back to a
 template that still reports scale, teams, and cascade depth — the app is fully
 functional either way.
 
@@ -213,7 +213,7 @@ screen or infinite spinner.
   directory as root, add `NEXT_PUBLIC_API_URL` pointing at your deployed backend.
 - **Backend**: [Render](https://render.com) or [Railway](https://railway.app) —
   deploy `backend/`, set `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`,
-  `ANTHROPIC_API_KEY` (optional), and `CORS_ORIGINS` to your Vercel domain.
+  `GEMINI_API_KEY` (optional), and `CORS_ORIGINS` to your Vercel domain.
 
 ## Screenshots
 

@@ -1,0 +1,2 @@
+# Root requirements for Render/CI: forward to backend requirements
+-r backend/requirements.txt
