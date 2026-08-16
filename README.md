@@ -5,7 +5,7 @@
 Cascade models a company's automation stack — n8n/Zapier/Make workflows, the third-party
 services they call (Stripe, Shopify, SendGrid...), and the chains where one workflow's
 completion triggers the next — as a graph in **CognoDB**. Pick a service, simulate an
-outage, and instantly see every workflow that fails as a direct or *cascading* result,
+outage, and instantly see every workflow that fails as a direct or _cascading_ result,
 which teams own them, and the single longest unbroken failure chain the outage sets off.
 
 Built for Wexa AI's take-home assignment.
@@ -14,8 +14,8 @@ Built for Wexa AI's take-home assignment.
 
 ## Why a graph database?
 
-The core question this app answers — *"if Stripe goes down, what breaks, and how far
-does the damage spread?"* — is fundamentally a **path-finding problem**, not a
+The core question this app answers — _"if Stripe goes down, what breaks, and how far
+does the damage spread?"_ — is fundamentally a **path-finding problem**, not a
 row-lookup problem:
 
 - **Failures cascade transitively.** Workflow A triggers B triggers C triggers D.
@@ -27,8 +27,8 @@ row-lookup problem:
   unbroken cascade chain from an outage (`app/queries.py::longest_cascade_chain`) is a
   native graph traversal. The relational equivalent requires materializing every
   possible path length and comparing — expensive and awkward at any real depth.
-- **The relationships *are* the interesting data.** A relational schema would store
-  `workflow_id, depends_on_service_id` rows just fine for *one hop*. But the product's
+- **The relationships _are_ the interesting data.** A relational schema would store
+  `workflow_id, depends_on_service_id` rows just fine for _one hop_. But the product's
   actual value — multi-hop blast radius, team-level impact, cascade depth — only exists
   by traversing relationships, which is exactly what a graph database is built to do
   cheaply regardless of how deep the chain runs.
@@ -49,19 +49,19 @@ graph LR
     Workflow -- CONSUMES --> DataObject
 ```
 
-| Node | Key properties |
-|---|---|
-| `Service` | `id, name, category, vendor, status` — an external dependency (Stripe, Shopify, Slack...) |
-| `Workflow` | `id, name, platform, status, criticality, description` — one automation |
-| `Team` | `id, name` — the owning team |
-| `DataObject` | `id, name` — the business object a workflow reads/writes (Order, Invoice...) |
+| Node         | Key properties                                                                            |
+| ------------ | ----------------------------------------------------------------------------------------- |
+| `Service`    | `id, name, category, vendor, status` — an external dependency (Stripe, Shopify, Slack...) |
+| `Workflow`   | `id, name, platform, status, criticality, description` — one automation                   |
+| `Team`       | `id, name` — the owning team                                                              |
+| `DataObject` | `id, name` — the business object a workflow reads/writes (Order, Invoice...)              |
 
-| Relationship | Meaning |
-|---|---|
-| `(Team)-[:OWNS]->(Workflow)` | who's on call when it breaks |
-| `(Workflow)-[:DEPENDS_ON]->(Service)` | a hard external dependency |
-| `(Workflow)-[:TRIGGERS]->(Workflow)` | completion of one workflow kicks off the next |
-| `(Workflow)-[:PRODUCES\|CONSUMES]->(DataObject)` | the data contract between workflows |
+| Relationship                                     | Meaning                                       |
+| ------------------------------------------------ | --------------------------------------------- |
+| `(Team)-[:OWNS]->(Workflow)`                     | who's on call when it breaks                  |
+| `(Workflow)-[:DEPENDS_ON]->(Service)`            | a hard external dependency                    |
+| `(Workflow)-[:TRIGGERS]->(Workflow)`             | completion of one workflow kicks off the next |
+| `(Workflow)-[:PRODUCES\|CONSUMES]->(DataObject)` | the data contract between workflows           |
 
 The seed dataset (`backend/seed/seed_data.py`) models a realistic small-company stack:
 4 teams, 12 services, 4 data objects, and 18 workflows — including genuine multi-step
@@ -166,12 +166,14 @@ cascade/
 ## Setup
 
 ### 1. Create your CognoDB instance
+
 1. Sign up at [console.cognodb.com/signup](https://console.cognodb.com/signup) (no credit card).
 2. Create a free `c0` instance, pick a region — provisions in under a minute.
 3. **Copy the generated password immediately** — it's shown once. You'll get a URI like
    `bolt+s://<instance-id>.databases.cognodb.cloud`.
 
 ### 2. Backend
+
 ```bash
 cd backend
 python -m venv .venv && source .venv/bin/activate   # or your usual venv workflow
@@ -180,18 +182,22 @@ cp .env.example .env        # fill in NEO4J_URI / NEO4J_USER / NEO4J_PASSWORD
 python seed/seed_data.py    # loads the demo automation stack
 uvicorn app.main:app --reload --port 8000
 ```
+
 Visit `http://localhost:8000/health` — should return `{"database_connected": true}`.
 
 ### 3. Frontend
+
 ```bash
 cd frontend
 npm install
 cp .env.local.example .env.local   # NEXT_PUBLIC_API_URL=http://localhost:8000
 npm run dev
 ```
+
 Visit `http://localhost:3000`.
 
 ### Optional: AI incident summaries
+
 Set `GEMINI_API_KEY` in `backend/.env`. Without it, summaries fall back to a
 template that still reports scale, teams, and cascade depth — the app is fully
 functional either way.
@@ -215,6 +221,12 @@ screen or infinite spinner.
   deploy `backend/`, set `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`,
   `GEMINI_API_KEY` (optional), and `CORS_ORIGINS` to your Vercel domain.
 
+### Live links
+
+- **Frontend (prod domain):** <https://cascade-orcin.vercel.app>
+- **Frontend (deployment URL):** <https://cascade-g2ge66yq9-ashvatth-joshis-projects.vercel.app>
+- **Backend API (prod domain):** <https://cascade-i7o7.vercel.app>
+- **Backend API (deployment URL):** <https://cascade-i7o7-l6za8vyt0-ashvatth-joshis-projects.vercel.app>
 ## Screenshots
 
 ### Service dashboard with SPOF highlight widget — pick any service to simulate an outage
@@ -231,5 +243,5 @@ screen or infinite spinner.
 
 ## Demo
 
-_Hosted demo link and screen recording will be added here before final submission._
-
+- **Live app:** <https://cascade-orcin.vercel.app>
+- **API base URL:** <https://cascade-i7o7.vercel.app>
